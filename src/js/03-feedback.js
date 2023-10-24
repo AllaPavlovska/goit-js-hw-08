@@ -1,41 +1,42 @@
+
 import throttle from 'lodash.throttle';
-
-const feedbackForm = document.querySelector('.feedback-form');
-const emailInput = feedbackForm.querySelector('input[name="email"]');
-const messageTextarea = feedbackForm.querySelector('textarea[name="message"]');
-
-// Відстежуємо подію input на полях форми
-feedbackForm.addEventListener('input', () => {
-  const feedbackFormData = {
-    email: emailInput.value,
-    message: messageTextarea.value,
-  };
-
-  // Зберігаємо об'єкт з даними у локальне сховище
-  localStorage.setItem('feedback-form-state', JSON.stringify(feedbackFormData));
-}, false);
-
-// Під час завантаження сторінки перевіряємо сховище
-window.addEventListener('load', () => {
-  const savedFormData = localStorage.getItem('feedback-form-state');
-
-  if (savedFormData) {
-    // Якщо є збережені дані, розпаковуємо їх та заповнюємо поля форми
-    const feedbackFormData = JSON.parse(savedFormData);
-    emailInput.value = feedbackFormData.email;
-    messageTextarea.value = feedbackFormData.message;
+const form = document.querySelector('.feedback-form');
+const KEY = 'feedback-form-state';
+let feedbackData = {};
+function saveToLocalStorage(e) {
+  feedbackData[e.target.name] = e.target.value.trim();
+  localStorage.setItem(KEY, JSON.stringify(feedbackData));
+}
+function loadFromLocalStorage() {
+  try {
+const savedData = localStorage.getItem(KEY);
+    if (!savedData) return;
+    feedbackData = JSON.parse(savedData);
+    Object.entries(feedbackData).forEach(([key, val]) => {
+      form.elements[key].value = val;
+    });
+  } catch (error) {
+console.log(error.message);
   }
-});
-
-// Під час сабміту форми очищуємо сховище та виводимо дані у консоль
-feedbackForm.addEventListener('submit', (event) => {
+  }
+function handleSubmit(event) {
   event.preventDefault();
-  localStorage.removeItem('feedback-form-state');
-
-  const feedbackFormData = {
+  const feedbackData = {
     email: emailInput.value,
     message: messageTextarea.value,
   };
+  console.log(feedbackData);
+  localStorage.removeItem(KEY);
+  emailInput.value = '';
+  messageTextarea.value = '';
+}
+const updateLocalStorage = throttle(saveToLocalStorage, 500);
+form.addEventListener('input', updateLocalStorage);
+form.addEventListener('submit', handleSubmit);
+window.addEventListener('load', loadFromLocalStorage);
 
-  console.log('Form data submitted:', feedbackFormData);
-});
+
+
+
+
+
